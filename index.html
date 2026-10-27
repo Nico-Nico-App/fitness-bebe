@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker Pro</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Fitness">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bibliothèques (mises en cache par le service worker pour l'usage hors ligne) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+<header>
+
+    <div class="header-left">
+
+    <h1>🏋️ Fitness Bébé</h1>
+
+    <div id="headerGoal">
+    🎯 Aucun objectif défini
+</div>
+
+<div class="header-progress">
+
+    <div id="headerProgressBar"></div>
+
+</div>
+
+</div>
+
+    <button id="darkModeBtn">
+        🌙 Mode sombre
+    </button>
+
+</header>
+
+<!-- ===========================
+     MENU ONGLETS
+=========================== -->
+
+<nav class="tabs">
+
+    <button class="tab-btn active" data-tab="dashboard">
+        ⚖️ Données de base
+    </button>
+
+    <button class="tab-btn" data-tab="daily">
+        🗓️ Suivi quotidien
+    </button>
+
+    <button class="tab-btn" data-tab="graphs">
+        📊 Graphiques
+    </button>
+
+    <button class="tab-btn" data-tab="historyPage">
+        📋 Historique
+    </button>
+
+</nav>
+
+<main>
+
+    <!-- ===========================
+         DONNÉES DE BASE
+    =========================== -->
+
+    <section id="dashboard" class="tab-content active">
+
+        <section class="card">
+
+            <h2>🎯 Objectif de poids</h2>
+
+            <input
+                type="number"
+                id="goalWeight"
+                placeholder="Poids cible (kg)">
+
+            <input
+                type="date"
+                id="goalDate">
+
+            <button onclick="saveGoal()">
+                Enregistrer l'objectif
+            </button>
+
+            <p id="goalInfo"></p>
+			
+			<div class="goal-progress">
+
+				<div class="goal-progress-bar"
+					id="goalProgressBar">
+				</div>
+
+			</div>
+
+<p id="goalProgressText"></p>
+
+        </section>
+
+        <section class="card body-metrics-card">
+
+            <h2>Suivi corporel</h2>
+
+            <div class="body-metrics-grid">
+                <section class="body-metrics-panel">
+
+                    <h3>⚖️ Suivi du poids</h3>
+
+            <input
+                type="date"
+                id="weightDate">
+
+            <input
+                type="number"
+                id="weightValue"
+                step="0.1"
+                placeholder="Poids (kg)">
+
+            <input
+                type="number"
+                id="heightValue"
+                placeholder="Taille (cm)">
+
+			<div class="bmi-card">
+
+    <span>IMC actuel</span>
+
+    <strong id="currentBMI">
+        -
+    </strong>
+
+</div>
+
+                </section>
+
+
+                <section class="body-metrics-panel">
+
+                    <h3>📏 Mensurations</h3>
+
+            <input
+                type="date"
+                id="measurementDate">
+
+            <input
+                type="number"
+                id="waist"
+                placeholder="Tour de taille (cm)">
+
+            <input
+                type="number"
+                id="chest"
+                placeholder="Tour de poitrine (cm)">
+
+            <input
+                type="number"
+                id="hips"
+                placeholder="Tour de hanches (cm)">
+
+            <input
+                type="number"
+                id="arms"
+                placeholder="Tour de bras (cm)">
+
+            <input
+                type="number"
+                id="thighs"
+                placeholder="Tour de cuisses (cm)">
+
+                </section>
+
+                <section class="body-metrics-panel">
+
+                    <h3>👤 Profil</h3>
+
+                    <select id="profileSex">
+                        <option value="">Sexe…</option>
+                        <option value="female">Femme</option>
+                        <option value="male">Homme</option>
+                    </select>
+
+                    <input
+                        type="number"
+                        id="profileBirthYear"
+                        placeholder="Année de naissance (ex. 1990)">
+
+                    <p id="profileInfo" class="profile-info"></p>
+
+                </section>
+            </div>
+
+            <button
+                type="button"
+                class="body-metrics-save"
+                onclick="saveBodyMetrics()">
+                Enregistrer
+            </button>
+        </section>
+    </section>
+
+    <section id="daily" class="tab-content">
+
+        
+
+<section class="card daily-workout-card">
+
+    <h2>💪 Nouvelle séance</h2>
+
+    <div class="workout-layout">
+        <div class="workout-entry">
+
+    <!-- DATE -->
+
+    <input
+        type="date"
+        id="workoutDate">
+
+    <!-- ACTIVITE -->
+
+    <select id="exercise">
+
+        <option>Squat</option>
+        <option>Développé couché</option>
+        <option>Développé militaire</option>
+        <option>Tractions</option>
+
+        <option>Course</option>
+        <option>Vélo</option>
+        <option>Natation</option>
+        <option>Tapis</option>
+
+    </select>
+
+    <!-- MUSCULATION -->
+
+    <div id="strengthFields">
+
+        <input
+            type="number"
+            id="sets"
+            placeholder="Nombre de séries">
+
+        <input
+            type="number"
+            id="reps"
+            placeholder="Nombre de répétitions">
+
+        <input
+            type="number"
+            id="strengthDuration"
+            placeholder="Durée en minutes (facultatif)">
+
+    </div>
+
+    <!-- CARDIO -->
+
+    <div id="cardioFields" style="display:none;">
+
+        <input
+            type="number"
+            id="distance"
+            step="0.1"
+            placeholder="Distance (km)">
+
+        <input
+            type="number"
+            id="duration"
+            placeholder="Durée (minutes)">
+
+    </div>
+
+    <!-- AJOUT ACTIVITE -->
+
+    <button
+        type="button"
+        id="addExerciseBtn">
+
+        ➕ Ajouter cette activité
+
+    </button>
+
+        </div>
+
+    <!-- LISTE ACTIVITES -->
+
+    <div class="session-list">
+
+        <h3>📋 Activités de la séance</h3>
+
+        <div id="exerciseQueue">
+
+            <p class="empty-session">
+                Aucune activité ajoutée
+            </p>
+
+        </div>
+
+    </div>
+
+        <div class="workout-walking">
+
+    <!-- MARCHE -->
+    <h3>🚶 Marche</h3>
+
+    <select id="walkingType">
+        <option value="0.6">Marche tranquille</option>
+        <option value="0.75" selected>Marche normale</option>
+        <option value="0.9">Marche rapide</option>
+        <option value="1.1">Randonnée / dénivelé</option>
+    </select>
+
+    <input
+        type="number"
+        id="walkingDistance"
+        step="0.1"
+        placeholder="Distance parcourue (km)">
+
+    <div class="walking-card">
+
+        <span>
+            🔥 Dépense estimée
+        </span>
+
+        <strong id="walkingCalories">
+            0 kcal
+        </strong>
+
+    </div>
+
+        </div>
+
+    <!-- RESUME -->
+
+    <div class="session-summary workout-summary">
+
+        <h3>📊 Résumé</h3>
+
+        <div class="summary-row">
+            <span>Activités :</span>
+            <strong id="activityCount">0</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Distance cardio :</span>
+            <strong id="totalDistance">0 km</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Calories activités :</span>
+            <strong id="activitiesCalories">0 kcal</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Calories marche :</span>
+            <strong id="summaryCalories">0 kcal</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Total estimé :</span>
+            <strong id="totalCalories">0 kcal</strong>
+        </div>
+
+    </div>
+
+    <!-- ENREGISTREMENT -->
+
+    <button
+        type="button"
+        onclick="saveWorkoutDay()"
+        class="save-session-btn">
+
+        💾 Enregistrer la séance complète
+
+    </button>
+
+    </div>
+
+</section>
+
+
+
+
+<section class="card">
+
+    <h2>👟 Pas de la journée</h2>
+
+    <input
+        type="date"
+        id="stepsDate">
+
+    <input
+        type="number"
+        id="stepsValue"
+        min="0"
+        placeholder="Nombre de pas">
+
+    <button type="button" onclick="saveSteps()">
+        Enregistrer les pas
+    </button>
+
+    <p id="stepsInfo" class="profile-info"></p>
+
+    <p class="meal-note">
+        Simple suivi : les pas n'influencent pas le calcul des calories.
+    </p>
+
+</section>
+
+<section class="card">
+
+            <h2>🍽️ Calories mangées</h2>
+
+            <input
+                type="date"
+                id="mealDate">
+
+            <select id="mealType">
+                <option value="breakfast">🥐 Déjeuner</option>
+                <option value="lunch">🍽️ Dîner</option>
+                <option value="dinner">🌙 Souper</option>
+                <option value="snack">🍎 Collation</option>
+            </select>
+
+            <select id="mealFood"></select>
+
+            <input
+                type="number"
+                id="mealQuantity"
+                step="0.5"
+                min="0.5"
+                value="1"
+                placeholder="Nombre de portions">
+
+            <input
+                type="text"
+                id="mealName"
+                placeholder="Description (facultatif)">
+
+            <input
+                type="number"
+                id="mealCalories"
+                placeholder="Calories (kcal) — modifiables">
+
+            <button type="button" id="addMealBtn" onclick="addMeal()">
+                ➕ Ajouter ce repas
+            </button>
+
+            <button
+                type="button"
+                id="cancelMealEditBtn"
+                style="display:none; margin-left:10px;"
+                onclick="cancelMealEdit()">
+                Annuler
+            </button>
+
+            <div class="session-list">
+
+                <h3>📋 Repas du jour sélectionné</h3>
+
+                <div id="mealTodayList"></div>
+
+            </div>
+
+            <div class="session-summary">
+
+                <div class="summary-row">
+                    <span>Calories mangées :</span>
+                    <strong id="mealEatenTotal">0 kcal</strong>
+                </div>
+
+                <div class="summary-row">
+                    <span>Métabolisme de base :</span>
+                    <strong id="mealBmrTotal">—</strong>
+                </div>
+
+                <div class="summary-row">
+                    <span>Activités et marche :</span>
+                    <strong id="mealActivityBurned">0 kcal</strong>
+                </div>
+
+                <div class="summary-row">
+                    <span>Métabolisme de base + activités suivies :</span>
+                    <strong id="mealBurnedTotal">0 kcal</strong>
+                </div>
+
+                <div class="summary-row">
+                    <span>Écart indicatif (apport − métabolisme de base − activités) :</span>
+                    <strong id="mealBalance">0 kcal</strong>
+                </div>
+
+                <p class="meal-note" id="mealBmrHint"></p>
+
+                <p class="meal-note">
+                    Le BMR est une estimation au repos et les calories d'activité
+                    sont approximatives. Cet écart ne représente pas la dépense
+                    énergétique totale de la journée et ne permet pas, à lui seul,
+                    de conclure à un déficit ou à un surplus.
+                </p>
+
+            </div>
+
+        </section>
+
+    </section>
+
+    <!-- ===========================
+         GRAPHIQUES
+    =========================== -->
+
+    <section id="graphs" class="tab-content">
+
+        <section class="analytics-heading">
+            <div>
+                <p class="analytics-eyebrow">VOTRE SUIVI</p>
+                <h2>Évolution et tendances</h2>
+                <p>Les indicateurs clés de votre progression, calculés à partir des données enregistrées.</p>
+            </div>
+
+            <label class="analytics-period" for="analyticsRange">
+                <span>Période affichée</span>
+                <select id="analyticsRange">
+                    <option value="30">30 derniers jours</option>
+                    <option value="90" selected>90 derniers jours</option>
+                    <option value="365">12 derniers mois</option>
+                    <option value="all">Depuis le début</option>
+                </select>
+            </label>
+        </section>
+
+        <section class="analytics-kpis" aria-label="Indicateurs clés">
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span>Poids actuel</span>
+                    <span class="metric-icon" aria-hidden="true">⚖</span>
+                </div>
+                <strong id="metricCurrentWeight">—</strong>
+                <small id="metricCurrentWeightMeta">Aucune pesée enregistrée</small>
+            </article>
+
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span>Évolution sur la période</span>
+                    <span class="metric-icon" aria-hidden="true">↗</span>
+                </div>
+                <strong id="metricWeightChange">—</strong>
+                <small id="metricWeightChangeMeta">Ajoutez au moins deux pesées</small>
+            </article>
+
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span>Progression vers l’objectif</span>
+                    <span class="metric-icon" aria-hidden="true">◎</span>
+                </div>
+                <strong id="metricGoalProgress">—</strong>
+                <small id="metricGoalProgressMeta">Aucun objectif défini</small>
+            </article>
+
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span>Séances enregistrées</span>
+                    <span class="metric-icon" aria-hidden="true">✦</span>
+                </div>
+                <strong id="metricWorkoutCount">0</strong>
+                <small id="metricWorkoutCountMeta">Sur la période affichée</small>
+            </article>
+
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span>Moyenne de pas</span>
+                    <span class="metric-icon" aria-hidden="true">👟</span>
+                </div>
+                <strong id="metricStepsAverage">—</strong>
+                <small id="metricStepsAverageMeta">Aucune journée renseignée</small>
+            </article>
+        </section>
+
+        <p class="analytics-period-note" id="analyticsPeriodNote"></p>
+
+        <section class="card chart-card chart-card--wide">
+            <div class="chart-heading">
+                <div>
+                    <span class="chart-kicker">TENDANCE</span>
+                    <h3>Évolution du poids</h3>
+                </div>
+                <p>Chaque point correspond à une pesée. La ligne pointillée indique votre objectif, s’il est défini.</p>
+            </div>
+            <div class="chart-frame chart-frame--tall">
+                <canvas id="weightChart"></canvas>
+                <p class="chart-empty" id="weightChartEmpty" hidden></p>
+            </div>
+        </section>
+
+        <section class="card chart-card">
+            <div class="chart-heading">
+                <div>
+                    <span class="chart-kicker">ENTRAÎNEMENT</span>
+                    <h3>Séances par semaine</h3>
+                </div>
+                <p>Nombre de séances enregistrées chaque semaine.</p>
+            </div>
+            <div class="chart-frame">
+                <canvas id="activityChart"></canvas>
+                <p class="chart-empty" id="activityChartEmpty" hidden></p>
+            </div>
+        </section>
+
+        <section class="card chart-card">
+            <div class="chart-heading">
+                <div>
+                    <span class="chart-kicker">ACTIVITÉ QUOTIDIENNE</span>
+                    <h3>Pas par semaine</h3>
+                </div>
+                <p>Moyenne des jours renseignés; les jours manquants ne sont pas comptés comme zéro.</p>
+            </div>
+            <div class="chart-frame">
+                <canvas id="stepsChart"></canvas>
+                <p class="chart-empty" id="stepsChartEmpty" hidden></p>
+            </div>
+        </section>
+
+        <section class="card chart-card">
+            <div class="chart-heading">
+                <div>
+                    <span class="chart-kicker">ALIMENTATION</span>
+                    <h3>Apports caloriques par semaine</h3>
+                </div>
+                <p>Moyenne par jour saisi, à titre indicatif uniquement.</p>
+            </div>
+            <div class="chart-frame">
+                <canvas id="caloriesChart"></canvas>
+                <p class="chart-empty" id="caloriesChartEmpty" hidden></p>
+            </div>
+        </section>
+
+        <section class="card chart-card">
+            <div class="chart-heading chart-heading--controls">
+                <div>
+                    <span class="chart-kicker">MENSURATIONS</span>
+                    <h3>Évolution corporelle</h3>
+                </div>
+                <label class="chart-control" for="measurementSelector">
+                    <span>Mesure</span>
+                    <select id="measurementSelector">
+                        <option value="waist" selected>Tour de taille</option>
+                        <option value="chest">Poitrine</option>
+                        <option value="hips">Hanches</option>
+                        <option value="arms">Bras</option>
+                        <option value="thighs">Cuisses</option>
+                        <option value="all">Comparer toutes (cm)</option>
+                    </select>
+                </label>
+            </div>
+            <div class="chart-frame">
+                <canvas id="measurementsChart"></canvas>
+                <p class="chart-empty" id="measurementsChartEmpty" hidden></p>
+            </div>
+        </section>
+
+    </section>
+
+    <!-- ===========================
+         HISTORIQUE
+    =========================== -->
+
+    <section id="historyPage" class="tab-content">
+
+        <section class="card">
+
+            <h2>📋 Historique des pesées</h2>
+
+            <div id="weightHistory"></div>
+
+            <button id="toggleWeightHistory">
+                Afficher plus
+            </button>
+
+        </section>
+
+        <section class="card">
+
+            <h2>🏆 Historique des séances</h2>
+
+            <div id="history"></div>
+
+        </section>
+		
+		<section class="card">
+
+			<h2>📏 Historique des mensurations</h2>
+
+			<div id="measurementHistory"></div>
+
+		</section>
+
+        <section class="card">
+
+            <h2>🍽️ Historique des repas</h2>
+
+            <div id="mealHistory"></div>
+
+        </section>
+
+        <section class="card">
+
+            <h2>👟 Historique des pas</h2>
+
+            <div id="stepsHistory"></div>
+
+        </section>
+
+        <section class="card export-card">
+
+            <h2>📤 Sauvegarde et export</h2>
+
+            <div class="export-actions">
+                <button type="button" onclick="exportExcel()">
+                    Exporter en Excel
+                </button>
+
+                <button type="button" onclick="exportPDF()">
+                    Exporter en PDF
+                </button>
+
+                <button type="button" onclick="exportBackup()">
+                    Télécharger une sauvegarde JSON
+                </button>
+            </div>
+
+            <label for="backupFile">
+                Importer une sauvegarde JSON
+            </label>
+
+            <input
+                type="file"
+                id="backupFile"
+                accept=".json,application/json"
+                onchange="importBackup(this.files[0]); this.value='';">
+
+            <p class="meal-note">
+                L'import remplace les données enregistrées dans ce navigateur après confirmation.
+            </p>
+
+        </section>
+
+    </section>
+
+</main>
+
+<!-- ===========================
+     SCRIPTS
+=========================== -->
+
+<script src="js/storage.js"></script>
+<script src="js/weights.js"></script>
+<script src="js/goals.js"></script>
+<script src="js/measurements.js"></script>
+<script src="js/workouts.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/steps.js"></script>
+<script src="js/meals.js"></script>
+<script src="js/dashboard-charts.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("sw.js").catch(console.error);
+        });
+    }
+    /* Demande au navigateur de protéger les données contre l'effacement automatique */
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().catch(() => {});
+    }
+</script>
+
+</body>
+
+</html>
